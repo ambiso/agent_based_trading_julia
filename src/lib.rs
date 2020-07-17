@@ -22,7 +22,7 @@ impl FRNG {
         rand_to_f64(self.inner.next_u64())
     }
 
-    pub fn fill(&mut self, mut v: &mut [f64]) {
+    pub fn fill(&mut self, v: &mut [f64]) {
         unsafe {
             use std::slice;
             self.inner.fill_bytes(slice::from_raw_parts_mut(v.as_mut_ptr() as *mut u8, v.len() * 8));
@@ -62,9 +62,6 @@ pub fn cont_run(time: usize, n: usize, lambda: f64, q: f64) -> f64 {
     let mut eps_sampler = SmallRng::from_rng(thread_rng())
         .unwrap()
         .sample_iter(rand_distr::StandardNormal);
-    let mut pchange_sampler = SmallRng::from_rng(thread_rng())
-        .unwrap()
-        .sample_iter(rand::distributions::Uniform::new_inclusive(0., 1.));
 
     let mut pchange = vec![0.0; n];
     let mut r = vec![0.0; time];
