@@ -1,0 +1,7 @@
+perf.data
+perf.data.old
+.#*
+target
+*.gpr
+*.rep
+flamegraph.svg
