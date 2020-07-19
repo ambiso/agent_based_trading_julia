@@ -15,7 +15,6 @@ panic = "abort"
 
 [dependencies]
 rand = {version = "0.7", features = ["small_rng", "simd_support", "nightly", "std"]}
-xorshift = "0.1"
 rand_distr = "0.2.2"
 libc = "0.2"
 packed_simd = "*"

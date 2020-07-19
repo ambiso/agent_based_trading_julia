@@ -1,63 +1,35 @@
 // resides in src/lib.rs
 use rand::prelude::SmallRng;
-use rand::{thread_rng, Rng, RngCore, SeedableRng};
+use rand::{thread_rng, Rng, SeedableRng};
 
-
-use simd_prngs::Xorshift128PlusX4;
-use rand::distributions::Distribution;
 use packed_simd::f64x4;
+use rand::distributions::Distribution;
+use simd_prngs::Xorshift128PlusX4;
+
 pub fn fill_f64(rng: &mut Xorshift128PlusX4, v: &mut [f64]) {
     let dist = rand::distributions::Open01;
-    v
-    .chunks_exact_mut(4)
-        .for_each(|x| {
-            let v: f64x4 = dist.sample(rng);
-            v.write_to_slice_aligned(x);
-        })
-}
-
-pub struct FRNG {
-    inner: SmallRng,
-}
-
-fn rand_to_f64(x: u64) -> f64 {
-    unsafe { std::mem::transmute::<_, f64>((x & ((1 << 52) - 1)) | (0x3fe << 52)) }
-}
-
-impl FRNG {
-    pub fn new() -> Self {
-        Self {
-            inner: SmallRng::from_entropy(),
-        }
-    }
-
-    pub fn gen(&mut self) -> f64 {
-        rand_to_f64(self.inner.next_u64())
-    }
-
-    pub fn fill(&mut self, v: &mut [f64]) {
-        unsafe {
-            use std::slice;
-            self.inner.fill_bytes(slice::from_raw_parts_mut(v.as_mut_ptr() as *mut u8, v.len() * 8));
-            v.iter_mut().for_each(|x| *x = rand_to_f64(std::mem::transmute(*x)));
-        }
-    }
+    let (a, b, c) = unsafe { v.align_to_mut() };
+    a.iter_mut().for_each(|x| *x = dist.sample(rng));
+    b.iter_mut().for_each(|x: &mut f64x4| *x = dist.sample(rng));
+    c.iter_mut().for_each(|x| *x = dist.sample(rng));
 }
 
 #[repr(C)]
 pub struct dSFMT {
-    _private: [u8; 4096]
+    _private: [u8; 4096], // FIXME: how to properly represent this struct in rust?
 }
 
 #[link(name = "dSFMT", kind = "static")]
-extern {
+extern "C" {
     fn dsfmt_init_gen_rand(gen: *mut dSFMT, seed: u32);
     fn dsfmt_fill_array_open_close(gen: *mut dSFMT, array: *mut f64, size: libc::c_int);
 }
 
 impl dSFMT {
     pub fn new() -> Self {
-        let mut s = Self { _private: [0; 4096] };
+        let mut s = Self {
+            _private: [0; 4096],
+        };
         unsafe {
             dsfmt_init_gen_rand(&mut s, 1337);
         }
@@ -79,25 +51,23 @@ pub fn cont_run(time: usize, n: usize, lambda: f64, q: f64) -> f64 {
     let mut pchange = vec![0.0; n];
     let mut r = vec![0.0; time];
     let mut theta = vec![0.; n];
-    let mut rng = dSFMT::new();
+    let mut rng = Xorshift128PlusX4::from_rng(&mut thread_rng()).unwrap();
 
     let n = n as f64;
     for t in 0..time {
         let eps: f64 = eps_sampler.next().unwrap();
         let r_t = if eps > 0. {
-                theta.iter().map(|&x| (eps > x) as i32).sum::<i32>() as f64 / (lambda * n)
-            } else {
-                -(theta.iter().map(|&x| (-eps > x) as i32).sum::<i32>() as f64) / (lambda * n)
-            };
+            theta.iter().map(|&x| (eps > x) as i32).sum::<i32>() as f64 / (lambda * n)
+        } else {
+            -(theta.iter().map(|&x| (-eps > x) as i32).sum::<i32>() as f64) / (lambda * n)
+        };
         // pchange.iter_mut()
         //     .for_each(|x| *x = pchange_sampler.next().unwrap())
-        rng.fill(&mut pchange);
-        theta
-            .iter_mut()
-            .zip(pchange.iter())
-            .for_each(|(x, pc)| {
-                *x = if *pc < q { r_t.abs() } else { *x };
-            });
+        //rng.fill(&mut pchange);
+        fill_f64(&mut rng, &mut pchange);
+        theta.iter_mut().zip(pchange.iter()).for_each(|(x, pc)| {
+            *x = if *pc < q { r_t.abs() } else { *x };
+        });
         r[t] = r_t;
     }
     kurtosis(r)

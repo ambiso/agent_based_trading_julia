@@ -1,20 +1,15 @@
-use agent_based_trading_julia::{cont_run, FRNG, dSFMT};
+use agent_based_trading_julia::fill_f64;
+use rand::SeedableRng;
+use simd_prngs::Xorshift128PlusX4;
 
 fn main() {
-    for _ in 0..100 {
-        cont_run(
-        10_000,
-        10_000,
-        0.05,
-        0.1
-        );
+    let mut v = vec![0.; 10_000];
+    let mut rng = Xorshift128PlusX4::from_rng(rand::thread_rng()).unwrap();
+    let mut k = 0.;
+    for _ in 0..1_000_000 {
+        fill_f64(&mut rng, &mut v);
+        k += v[9999];
     }
-    // let mut rng = FRNG::new();
-    // let mut rng = dSFMT::new();
-
-    // let mut v = vec![0.; 1000];
-    // rng.fill(&mut v);
-    // for x in v {
-    //     println!("{}", x);
-    // }
+    println!("{}", k);
+    // use agent_based_trading_julia::cont_run;
 }
