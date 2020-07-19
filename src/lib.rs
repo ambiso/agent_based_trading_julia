@@ -1,7 +1,10 @@
 // resides in src/lib.rs
 use rand::prelude::SmallRng;
 use rand::{thread_rng, Rng, RngCore, SeedableRng};
-use std::time::{Duration, Instant};
+
+pub fn fill_f64<T: Rng>(rng: T, v: &mut [f64]) {
+
+}
 
 pub struct FRNG {
     inner: SmallRng,

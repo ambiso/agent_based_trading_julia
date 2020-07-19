@@ -7,8 +7,11 @@ dependencies = [
  "cc",
  "criterion",
  "libc",
+ "packed_simd",
  "rand 0.7.3",
+ "rand_core 0.5.1",
  "rand_distr",
+ "simd_prngs",
  "xorshift",
 ]
 
@@ -333,6 +336,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a170cebd8021a008ea92e4db85a72f80b35df514ec664b296fdcbb654eac0b2c"
 
 [[package]]
+name = "packed_simd"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a85ea9fc0d4ac0deb6fe7911d38786b32fc11119afd9e9d38b84ff691ce64220"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
 name = "plotters"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -399,6 +411,7 @@ checksum = "6a6b1679d49b24bbfe0c803429aa1874472f50d9b363131f0e89fc356b544d03"
 dependencies = [
  "getrandom",
  "libc",
+ "packed_simd",
  "rand_chacha",
  "rand_core 0.5.1",
  "rand_hc",
@@ -605,6 +618,15 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "simd_prngs"
+version = "0.1.0"
+source = "git+https://github.com/ambiso/simd_prngs#204e59e69b2a531ad89a1b6d89c45f3dc53fdc17"
+dependencies = [
+ "packed_simd",
+ "rand 0.7.3",
 ]
 
 [[package]]
