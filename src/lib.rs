@@ -2,8 +2,18 @@
 use rand::prelude::SmallRng;
 use rand::{thread_rng, Rng, RngCore, SeedableRng};
 
-pub fn fill_f64<T: Rng>(rng: T, v: &mut [f64]) {
 
+use simd_prngs::Xorshift128PlusX4;
+use rand::distributions::Distribution;
+use packed_simd::f64x4;
+pub fn fill_f64(rng: &mut Xorshift128PlusX4, v: &mut [f64]) {
+    let dist = rand::distributions::Open01;
+    v
+    .chunks_exact_mut(4)
+        .for_each(|x| {
+            let v: f64x4 = dist.sample(rng);
+            v.write_to_slice_aligned(x);
+        })
 }
 
 pub struct FRNG {
